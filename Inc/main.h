@@ -58,6 +58,7 @@
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
+#define HAL_HR04_PERIOD (1000000 * 2 / 340 * 4) - 1
 
 #define LED_Pin GPIO_PIN_13
 #define LED_GPIO_Port GPIOC
@@ -77,8 +78,10 @@
 #define Servo0_GPIO_Port GPIOA
 #define Encode0_Pin GPIO_PIN_10
 #define Encode0_GPIO_Port GPIOB
+#define Encode0_EXTI_IRQn EXTI15_10_IRQn
 #define Encode1_Pin GPIO_PIN_11
 #define Encode1_GPIO_Port GPIOB
+#define Encode1_EXTI_IRQn EXTI15_10_IRQn
 #define NearL1_Pin GPIO_PIN_3
 #define NearL1_GPIO_Port GPIOB
 #define NearL2_Pin GPIO_PIN_4

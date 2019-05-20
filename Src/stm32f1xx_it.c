@@ -37,11 +37,14 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
+#include "HR04.h"
 extern uint8_t TF_MPU6050;
+extern uint16_t EncodeSor[2];
 uint32_t Clock_MPU6050;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern TIM_HandleTypeDef htim2;
 
 extern TIM_HandleTypeDef htim4;
 
@@ -153,13 +156,13 @@ void DebugMon_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-	if(Clock_MPU6050)
-		Clock_MPU6050--;
-	else
-	{
-		Clock_MPU6050 = 5 - 1;
-		TF_MPU6050 = 1;
-	}
+  if (Clock_MPU6050)
+    Clock_MPU6050--;
+  else
+  {
+    Clock_MPU6050 = 5 - 1;
+    TF_MPU6050 = 1;
+  }
   /* USER CODE END SysTick_IRQn 0 */
   osSystickHandler();
   /* USER CODE BEGIN SysTick_IRQn 1 */
@@ -175,6 +178,20 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+* @brief This function handles TIM2 global interrupt.
+*/
+void TIM2_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM2_IRQn 0 */
+  HR04_IRQHandler();
+  /* USER CODE END TIM2_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim2);
+  /* USER CODE BEGIN TIM2_IRQn 1 */
+
+  /* USER CODE END TIM2_IRQn 1 */
+}
+
+/**
 * @brief This function handles TIM4 global interrupt.
 */
 void TIM4_IRQHandler(void)
@@ -186,6 +203,28 @@ void TIM4_IRQHandler(void)
   /* USER CODE BEGIN TIM4_IRQn 1 */
 
   /* USER CODE END TIM4_IRQn 1 */
+}
+
+/**
+* @brief This function handles EXTI line[15:10] interrupts.
+*/
+void EXTI15_10_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
+  if(EXTI->PR & GPIO_PIN_10)
+  {
+    EncodeSor[0]++;
+  }
+  if(EXTI->PR & GPIO_PIN_11)
+  {
+    EncodeSor[1]++;
+  }
+  /* USER CODE END EXTI15_10_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
+  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
+
+  /* USER CODE END EXTI15_10_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

@@ -51,9 +51,11 @@
 #include "task.h"
 #include "cmsis_os.h"
 
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN Includes */     
 #include "tim.h"
 #include "MPU6050.h"
+#include "HR04.h"
+#include "PID.h"
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -62,8 +64,11 @@ osThreadId Task_CtrlHandle;
 osThreadId Task_MPU6050Handle;
 
 /* USER CODE BEGIN Variables */
+//#Data
 uint8_t TF_READY = 0xFF;
 uint8_t TF_MPU6050 = 0;
+uint16_t EncodeSor[2] = {0,0};
+uint8_t NearSor[4];
 MPU_Datas datas;
 MPU_V3D data_acc;
 MPU_V3D data_gyro;
@@ -71,25 +76,42 @@ MPU_V3D data_angle;
 MPU_V3D data_gEInt;
 MPU_Quat data_q = {0, 0, 0, 1};
 MPU_Quat data_baseQ = {0, 0, 0, 1};
+//#PID
+/*
+HR04_GetFloatCm -> vL
+data_angle.z -> vTheta
+*/
+PID_TypeDef pidL;
+PID_TypeDef pidDL;
+PID_TypeDef pidA;
+//Distance to wall:l
+float value_Len;
+float set_Len;
+//Delte Distance to wall:dl
+float value_dLen;
+float set_dLen = 0;
+//Angle theta of car:theta
+float value_Theta;
+float error_Theta;
+float set_Theta = 0;
 /* USER CODE END Variables */
 
 /* Function prototypes -------------------------------------------------------*/
-void StartDefaultTask(void const *argument);
-void StartTask_Ctrl(void const *argument);
-void StartTaskMPU6050(void const *argument);
+void StartDefaultTask(void const * argument);
+void StartTask_Ctrl(void const * argument);
+void StartTaskMPU6050(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE BEGIN FunctionPrototypes */
-
+void Key_Loop(void);
 /* USER CODE END FunctionPrototypes */
 
 /* Hook prototypes */
 
 /* Init FreeRTOS */
 
-void MX_FREERTOS_Init(void)
-{
+void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -129,41 +151,63 @@ void MX_FREERTOS_Init(void)
 }
 
 /* StartDefaultTask function */
-void StartDefaultTask(void const *argument)
+void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN StartDefaultTask */
+  uint8_t LedTime;
   TF_READY = 0x03;
   while (TF_READY)
     osDelay(200);
   /* Infinite loop */
   for (;;)
   {
-    osDelay(200);
-    GPIOC->ODR ^= GPIO_ODR_ODR13;               //Flash LED P13
-    printf("ANGLE:*G%-.1f*  \r", data_angle.z); //\x1b[1B
+    osDelay(100);
+    if (LedTime++ < 2)
+      GPIOC->BRR = GPIO_BRR_BR13; //Flash LED P13
+    else if (LedTime > 10)
+      LedTime = 0;
+    osDelay(100);
+    GPIOC->BSRR = GPIO_BSRR_BS13;
+
+    //Ctrl
+    printf("\x1b[1BANGLE:*G%-.1f*  \r\x1b[1A", data_angle.z);
+    if (TF_HR04)
+    {
+      TF_HR04 = 0;
+      printf("\x1b[2BHR04:*D%dcm  \t%dcm  *  \r\x1b[2A",
+             HR04_GetIntCm(0) / 1000, HR04_GetIntCm(1) / 1000);
+    }
+    printf("\x1b[3BNear:*S%02X\t%02X\t%02X\t%02X\t*  \r\x1b[3A",
+           NearSor[0], NearSor[1], NearSor[2], NearSor[3]);
+    printf("\x1b[4BEncode:*E%d\t%d\t*  \r\x1b[4A",
+           EncodeSor[0], EncodeSor[1]);
   }
   /* USER CODE END StartDefaultTask */
 }
 
 /* StartTask_Ctrl function */
-void StartTask_Ctrl(void const *argument)
+void StartTask_Ctrl(void const * argument)
 {
   /* USER CODE BEGIN StartTask_Ctrl */
+  //HR04
+  HR04_Config();
   osDelay(1000);
+  //Servo
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   /* Infinite loop */
   TF_READY &= ~0x01;
   for (;;)
   {
     osDelay(10);
+    Key_Loop();
     TIM3->CCR1 = 1500 + data_angle.z * 1000 / 90;
   }
   /* USER CODE END StartTask_Ctrl */
 }
 
 /* StartTaskMPU6050 function */
-void StartTaskMPU6050(void const *argument)
+void StartTaskMPU6050(void const * argument)
 {
   /* USER CODE BEGIN StartTaskMPU6050 */
   MPU_Datas datas_base;
@@ -205,7 +249,16 @@ void StartTaskMPU6050(void const *argument)
 }
 
 /* USER CODE BEGIN Application */
-
+void Key_Loop(void)
+{
+  uint8_t i;
+  for (i = 0; i < 4; i++)
+  {
+    NearSor[i] <<= 1;
+    if (GPIOB->IDR & (GPIO_IDR_IDR3 << i))
+      NearSor[i]++;
+  }
+}
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
