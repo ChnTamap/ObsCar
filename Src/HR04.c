@@ -4,7 +4,7 @@
 #include "HR04.h"
 
 /* Var */
-#define HR04_PERIOD (1000000 * 2 / 340 * 4) - 1 //4Meter HR04
+#define HR04_PERIOD (1000000 * 2 / 340 * 4) - 1 //8Meter HR04
 uint8_t TF_HR04 = 0;
 uint16_t ICReadValue[2] = {0, 0};
 uint16_t HR04_Value[2] = {0, 0};
@@ -17,6 +17,9 @@ void HR04_Config(void)
 	HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_3);
 	//Disable output
+	TIM2->ARR = HR04_PERIOD;
+	TIM2->CCR1 = HR04_PERIOD - 10;
+	TIM2->CCR3 = HR04_PERIOD - 10;
 	TIM2->CCER &= ~(TIM_CCER_CC1E | TIM_CCER_CC3E);
 	HAL_TIM_Base_Start_IT(&htim2);
 	TIM2->DIER |= TIM_DIER_UDE | TIM_DIER_CC2IE | TIM_DIER_CC4IE;

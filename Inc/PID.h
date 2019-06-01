@@ -7,13 +7,13 @@ typedef struct
 	float Kp;
 	float Ki;
 	float Kd;
-	//value old
-	float vO;
+	//Delte time
+	float dT;
 	//value integrator
 	float vI;
 	float limitI; //Integrator max limit
-	//Delte time
-	float dT;
+	//value old
+	float vO;
 } PID_TypeDef;
 float PID_Process(PID_TypeDef *pPID, float value_e);
 

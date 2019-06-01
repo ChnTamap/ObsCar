@@ -183,7 +183,7 @@ void MPU_Filter(MPU_V3D *vG, MPU_V3D *vA, MPU_V3D *eInt, MPU_Quat *q, float half
 
 void MPU_GetAngle(MPU_Quat *q, float *roll, float *pitch, float *yaw)
 {
-	*roll = asin(2.f * (q->x * q->y + q->z * q->w)) * 57.2957795f;
-	*pitch = asin(2.f * (q->z * q->x + q->y * q->w)) * 57.2957795f;
-	*yaw = asin(2.f * (q->y * q->z + q->x * q->w)) * 57.2957795f;
+	*roll = asin(2.f * (q->x * q->y + q->z * q->w));// * 57.2957795f;
+	*pitch = asin(2.f * (q->z * q->x + q->y * q->w));// * 57.2957795f;
+	*yaw = asin(2.f * (q->y * q->z + q->x * q->w));// * 57.2957795f;
 }
