@@ -137,9 +137,9 @@ uint8_t GUI_Sele = 0;
 #define Para_Len 4
 uint16_t Para_List[Para_Len] = {15, 80, 25, 20};
 #define Para_ANGLE_READY Para_List[0] //15
-#define Para_OBS_DIS Para_List[1] //80
-#define Para_TURN_ANGLE Para_List[2] //25
-#define Para_DIS_DIFF Para_List[3] //20
+#define Para_OBS_DIS Para_List[1]	 //80
+#define Para_TURN_ANGLE Para_List[2]  //25
+#define Para_DIS_DIFF Para_List[3]	//20
 /* USER CODE END Variables */
 
 /* Function prototypes -------------------------------------------------------*/
@@ -151,7 +151,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE BEGIN FunctionPrototypes */
 void GUI_View(void);
-void GUI_Edit(void);
+void GUI_Edit(uint16_t upd_items);
 void GUI_Key(void);
 void Key_Loop(void);
 void Cali_Alpha(void);
@@ -227,10 +227,10 @@ void StartDefaultTask(void const *argument)
 		GPIOC->BSRR = GPIO_BSRR_BS13;
 
 		//View
-		if(GUI_Mode == 0)
+		if (GUI_Mode == 0)
 			GUI_View();
-		else
-			GUI_Edit();
+		// else
+		// 	GUI_Edit();
 	}
 	/* USER CODE END StartDefaultTask */
 }
@@ -261,7 +261,7 @@ void StartTask_Ctrl(void const *argument)
 			Step_Ready();
 
 		TIM3->CCR1 = 1500 + (value_servo - value_servo0);
-		
+
 		GUI_Key();
 		Key_Loop();
 		if (KEY_IS_DOWN(0))
@@ -355,31 +355,32 @@ void StartTaskMPU6050(void const *argument)
 /* USER CODE BEGIN Application */
 uint8_t USART1_Get(void)
 {
-	if(USART1->SR & USART_SR_RXNE)
+	if (USART1->SR & USART_SR_RXNE)
 	{
 		USART1->SR &= ~USART_SR_RXNE;
 		return USART1->DR;
 	}
 	return 0;
 }
-#define USART_IS_KEY(buf,key) ((buf == key) || (buf == (key - 'A' + 'a')))
-#define USART_CLEAR printf("\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\x1b[4");
+#define USART_IS_KEY(buf, key) ((buf == key) || (buf == (key - 'A' + 'a')))
+#define USART_CLEAR printf("\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\x1b[4A");
 void GUI_Key(void)
 {
 	uint8_t buf;
 	buf = USART1_Get();
-	if(!buf)
+	if (!buf)
 		return;
-	if(GUI_Mode == 0)
+	if (GUI_Mode == 0)
 	{
-		if(USART_IS_KEY(buf,'E'))
+		if (USART_IS_KEY(buf, 'E'))
 		{
 			//Enable Setting Mode
 			GUI_Mode = 1;
 			GUI_Sele = 0;
 			USART_CLEAR;
+			GUI_Edit(0xFFFF);
 		}
-		else if(USART_IS_KEY(buf,'R'))
+		else if (USART_IS_KEY(buf, 'R'))
 		{
 			Flag_Mode = FLAG_MODE_CALI_G;
 			Value_CaliGx = 0;
@@ -387,35 +388,39 @@ void GUI_Key(void)
 			Value_CaliGz = 0;
 			Value_CaliT = 0;
 		}
-		else if(buf == '\r' || buf == '\n' || USART_IS_KEY(buf, 'N'))
+		else if (buf == '\r' || buf == '\n' || USART_IS_KEY(buf, 'N'))
 		{
 			Flag_Mode = FLAG_MODE_READY;
 		}
 	}
 	else
 	{
-		if(USART_IS_KEY(buf,'Q'))
+		if (USART_IS_KEY(buf, 'Q'))
 		{
 			GUI_Mode = 0;
 			USART_CLEAR;
 		}
-		else if(USART_IS_KEY(buf,'W'))
+		else if (USART_IS_KEY(buf, 'W'))
 		{
-			if(GUI_Sele)
+			if (GUI_Sele)
 				GUI_Sele--;
+			GUI_Edit(0x0003 << GUI_Sele);
 		}
-		else if(USART_IS_KEY(buf,'S'))
+		else if (USART_IS_KEY(buf, 'S'))
 		{
-			if(GUI_Sele < Para_Len-1)
+			if (GUI_Sele < Para_Len - 1)
 				GUI_Sele++;
+			GUI_Edit(0x0003 << (GUI_Sele - 1));
 		}
-		else if(USART_IS_KEY(buf,'A'))
+		else if (USART_IS_KEY(buf, 'A'))
 		{
 			Para_List[GUI_Sele]--;
+			GUI_Edit(0x0001 << GUI_Sele);
 		}
-		else if(USART_IS_KEY(buf,'D'))
+		else if (USART_IS_KEY(buf, 'D'))
 		{
 			Para_List[GUI_Sele]++;
+			GUI_Edit(0x0001 << GUI_Sele);
 		}
 	}
 }
@@ -428,48 +433,62 @@ void GUI_View(void)
 	else
 	{
 		printf("\x1b[1BANGLE:*G%-.1f,%-.1f,%-.1f*   \r\x1b[1A",
-				data_angle.x * 57.2957795f,
-				data_angle.y * 57.2957795f,
-				data_angle.z * 57.2957795f);
+			   data_angle.x * 57.2957795f,
+			   data_angle.y * 57.2957795f,
+			   data_angle.z * 57.2957795f);
 	}
 	if (TF_HR04)
 	{
 		TF_HR04 = 0;
 		printf("\x1b[2B*DHR04:%dcm  \t%dcm  *  \r\x1b[2A",
-				HR04_GetIntCm(0), HR04_GetIntCm(1));
+			   HR04_GetIntCm(0), HR04_GetIntCm(1));
 	}
 	printf("\x1b[3B*SNear:%02X\t%02X\t%02X\t%02X\t*	\r\x1b[3A",
-			NearSor[0], NearSor[1], NearSor[2], NearSor[3]);
+		   NearSor[0], NearSor[1], NearSor[2], NearSor[3]);
 	printf("\x1b[4B*PMode:%d,Step:%d*    \r\x1b[4A",
-			Flag_Mode, Flag_Step);
+		   Flag_Mode, Flag_Step);
 }
-void GUI_Edit(void)
+#define BG_SELECT printf("\033[46;30m")
+#define BG_NORMAL printf("\033[0m")
+void GUI_Edit(uint16_t upd_items)
 {
-	if(GUI_Sele == 0)
-		printf("\033[43;37m");
-	else
-		printf("\033[0m");
-	printf("\x1b[1B*GReadyAngle:%d  *  \r\x1b[1A",
-			Para_ANGLE_READY);
-	if(GUI_Sele == 1)
-		printf("\033[43;37m");
-	else
-		printf("\033[0m");
-	printf("\x1b[2B*D:ObsDis%d  *  \r\x1b[2A",
-			Para_OBS_DIS);
-	if(GUI_Sele == 2)
-		printf("\033[43;37m");
-	else
-		printf("\033[0m");
-	printf("\x1b[3B*S:TurnAngle%d  *  \r\x1b[3A",
-			Para_TURN_ANGLE);
-	if(GUI_Sele == 3)
-		printf("\033[43;37m");
-	else
-		printf("\033[0m");
-	printf("\x1b[4B*P:DisDiff%d  *  \r\x1b[4A",
-			Para_DIS_DIFF);
-	printf("\033[0m");
+	if (upd_items & (0x0001 << 0))
+	{
+		if (GUI_Sele == 0)
+			BG_SELECT;
+		else
+			BG_NORMAL;
+		printf("\x1b[1B*G:ReadyAngle:%d  *  \r\x1b[1A",
+			   Para_ANGLE_READY);
+	}
+	if (upd_items & (0x0001 << 1))
+	{
+		if (GUI_Sele == 1)
+			BG_SELECT;
+		else
+			BG_NORMAL;
+		printf("\x1b[2B*D:ObsDis:%d  *  \r\x1b[2A",
+			   Para_OBS_DIS);
+	}
+	if (upd_items & (0x0001 << 2))
+	{
+		if (GUI_Sele == 2)
+			BG_SELECT;
+		else
+			BG_NORMAL;
+		printf("\x1b[3B*S:TurnAngle:%d  *  \r\x1b[3A",
+			   Para_TURN_ANGLE);
+	}
+	if (upd_items & (0x0001 << 3))
+	{
+		if (GUI_Sele == 3)
+			BG_SELECT;
+		else
+			BG_NORMAL;
+		printf("\x1b[4B*P:DisDiff:%d  *  \r\x1b[4A",
+			   Para_DIS_DIFF);
+	}
+	BG_NORMAL;
 }
 void Key_Loop(void)
 {
@@ -565,7 +584,7 @@ void Step_Run(void)
 	}
 }
 //TURN_ANGLE Servo
-#define TURN_ANGLE (-Para_OBS_DIS * 1000 / 90)
+#define TURN_ANGLE (-Para_TURN_ANGLE * 1000 / 90)
 #define DIS_DIFF Para_DIS_DIFF
 uint8_t Flag_Dir = 0;
 int16_t Flag_Angle;
