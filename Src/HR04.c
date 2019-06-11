@@ -18,8 +18,8 @@ void HR04_Config(void)
 	HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_3);
 	//Disable output
 	TIM2->ARR = HR04_PERIOD;
-	TIM2->CCR1 = HR04_PERIOD - 10;
-	TIM2->CCR3 = HR04_PERIOD - 10;
+	TIM2->CCR1 = HR04_PERIOD - 20;
+	TIM2->CCR3 = HR04_PERIOD - 20;
 	TIM2->CCER &= ~(TIM_CCER_CC1E | TIM_CCER_CC3E);
 	HAL_TIM_Base_Start_IT(&htim2);
 	TIM2->DIER |= TIM_DIER_UDE | TIM_DIER_CC2IE | TIM_DIER_CC4IE;
@@ -31,6 +31,7 @@ void HR04_IRQHandler(void)
 {
 	static uint8_t index = 0;
 	uint16_t TIM_CCER_CCxE, TIM_SR_CCxIF;
+	uint16_t tmpU16;
 	/* TIM2 Update interrupt */
 	if (TIM2->SR & TIM_SR_UIF)
 	{
@@ -62,18 +63,20 @@ void HR04_IRQHandler(void)
 			if (TIM2->CCER & TIM_CCER_CC24P)
 			{
 				/* Get the Input Capture value */
-				HR04_Value[index] = (index == 0) ? TIM2->CCR2 : TIM2->CCR4;
+				tmpU16 = (index == 0) ? TIM2->CCR2 : TIM2->CCR4;
 
 				/* Capture computation */
-				if (HR04_Value[index] > ICReadValue[index])
+				if (tmpU16 > ICReadValue[index])
 				{
-					HR04_Value[index] = (HR04_Value[index] - ICReadValue[index]);
+					tmpU16 = (tmpU16 - ICReadValue[index]);
 				}
 				else
 				{
-					HR04_Value[index] = ((HR04_PERIOD - ICReadValue[index]) + HR04_Value[index]);
+					tmpU16 = ((HR04_PERIOD - ICReadValue[index]) + tmpU16);
 				}
 				TIM2->CCER &= ~TIM_CCER_CC24P;
+				if (tmpU16 > 50)
+					HR04_Value[index] = tmpU16;
 				//Next index
 				index ^= 0x01;
 				//Enable output
