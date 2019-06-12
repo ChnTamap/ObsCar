@@ -537,8 +537,8 @@ void Step_Ready(void)
 void Step_Run(void)
 {
 	float tmpF, dL;
-	//Is obs start?HC-SR04?NearSorL1?L2?
-	if (HR04_GetIntCm(0) < OBS_DIS || NS_IS_PRESS(NearSorL1) || NS_IS_PRESS(NearSorL2))
+	//Is obs start?HC-SR04?NearSorL1?R1?
+	if (HR04_GetIntCm(0) < OBS_DIS || NS_IS_PRESS(NearSorL1) || NS_IS_PRESS(NearSorR1))
 	{
 		Flag_Mode = FLAG_MODE_OBS;
 		Flag_Step = 0;
@@ -586,7 +586,7 @@ void Step_Run(void)
 //TURN_ANGLE Servo
 #define TURN_ANGLE (-Para_TURN_ANGLE * 1000 / 90)
 #define DIS_DIFF Para_DIS_DIFF
-uint8_t Flag_Dir = 0;
+uint8_t Flag_Dir = 1;
 int16_t Flag_Angle;
 uint16_t value_pDis;
 uint8_t *NearSorX1;
