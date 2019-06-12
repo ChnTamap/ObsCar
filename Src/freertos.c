@@ -1,57 +1,57 @@
 /**
-	******************************************************************************
-	* File Name					: freertos.c
-	* Description				: Code for freertos applications
-	******************************************************************************
-	* This notice applies to any and all portions of this file
-	* that are not between comment pairs USER CODE BEGIN and
-	* USER CODE END. Other portions of this file, whether 
-	* inserted by the user or by software development tools
-	* are owned by their respective copyright owners.
-	*
-	* Copyright (c) 2019 STMicroelectronics International N.V. 
-	* All rights reserved.
-	*
-	* Redistribution and use in source and binary forms, with or without 
-	* modification, are permitted, provided that the following conditions are met:
-	*
-	* 1. Redistribution of source code must retain the above copyright notice, 
-	*		this list of conditions and the following disclaimer.
-	* 2. Redistributions in binary form must reproduce the above copyright notice,
-	*		this list of conditions and the following disclaimer in the documentation
-	*		and/or other materials provided with the distribution.
-	* 3. Neither the name of STMicroelectronics nor the names of other 
-	*		contributors to this software may be used to endorse or promote products 
-	*		derived from this software without specific written permission.
-	* 4. This software, including modifications and/or derivative works of this 
-	*		software, must execute solely and exclusively on microcontroller or
-	*		microprocessor devices manufactured by or for STMicroelectronics.
-	* 5. Redistribution and use of this software other than as permitted under 
-	*		this license is void and will automatically terminate your rights under 
-	*		this license. 
-	*
-	* THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-	* AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-	* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-	* PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-	* RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-	* SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-	* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-	* LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-	* OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-	* LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-	* NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-	* EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-	*
-	******************************************************************************
-	*/
+  ******************************************************************************
+  * File Name          : freertos.c
+  * Description        : Code for freertos applications
+  ******************************************************************************
+  * This notice applies to any and all portions of this file
+  * that are not between comment pairs USER CODE BEGIN and
+  * USER CODE END. Other portions of this file, whether 
+  * inserted by the user or by software development tools
+  * are owned by their respective copyright owners.
+  *
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
+  * All rights reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without 
+  * modification, are permitted, provided that the following conditions are met:
+  *
+  * 1. Redistribution of source code must retain the above copyright notice, 
+  *    this list of conditions and the following disclaimer.
+  * 2. Redistributions in binary form must reproduce the above copyright notice,
+  *    this list of conditions and the following disclaimer in the documentation
+  *    and/or other materials provided with the distribution.
+  * 3. Neither the name of STMicroelectronics nor the names of other 
+  *    contributors to this software may be used to endorse or promote products 
+  *    derived from this software without specific written permission.
+  * 4. This software, including modifications and/or derivative works of this 
+  *    software, must execute solely and exclusively on microcontroller or
+  *    microprocessor devices manufactured by or for STMicroelectronics.
+  * 5. Redistribution and use of this software other than as permitted under 
+  *    this license is void and will automatically terminate your rights under 
+  *    this license. 
+  *
+  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
+  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
+  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
+  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
+  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
+  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  *
+  ******************************************************************************
+  */
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "task.h"
 #include "cmsis_os.h"
 
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN Includes */     
 #include "tim.h"
 #include "MPU6050.h"
 #include "HR04.h"
@@ -130,6 +130,15 @@ float set_angle = 0;
 //Angle of servo
 int16_t value_servo = 0;
 int16_t value_servo0 = -73;
+//#Obs
+//TURN_ANGLE Servo
+#define TURN_ANGLE (-Para_TURN_ANGLE * 1000 / 90)
+#define DIS_DIFF Para_DIS_DIFF
+uint8_t Flag_Dir = 1;
+int16_t Flag_Angle;
+uint16_t value_pDis;
+uint8_t *NearSorX1;
+uint8_t *NearSorX2;
 //#GUI
 uint8_t GUI_Mode = 0;
 uint8_t GUI_Sele = 0;
@@ -143,9 +152,9 @@ uint16_t Para_List[Para_Len] = {15, 80, 25, 20};
 /* USER CODE END Variables */
 
 /* Function prototypes -------------------------------------------------------*/
-void StartDefaultTask(void const *argument);
-void StartTask_Ctrl(void const *argument);
-void StartTaskMPU6050(void const *argument);
+void StartDefaultTask(void const * argument);
+void StartTask_Ctrl(void const * argument);
+void StartTaskMPU6050(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -164,57 +173,56 @@ void Step_Obs(void);
 
 /* Init FreeRTOS */
 
-void MX_FREERTOS_Init(void)
-{
-	/* USER CODE BEGIN Init */
+void MX_FREERTOS_Init(void) {
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* USER CODE BEGIN RTOS_MUTEX */
+  /* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-	/* USER CODE END RTOS_MUTEX */
+  /* USER CODE END RTOS_MUTEX */
 
-	/* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
-	/* USER CODE END RTOS_SEMAPHORES */
+  /* USER CODE END RTOS_SEMAPHORES */
 
-	/* USER CODE BEGIN RTOS_TIMERS */
+  /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-	/* USER CODE END RTOS_TIMERS */
+  /* USER CODE END RTOS_TIMERS */
 
-	/* Create the thread(s) */
-	/* definition and creation of defaultTask */
-	osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-	/* definition and creation of Task_Ctrl */
-	osThreadDef(Task_Ctrl, StartTask_Ctrl, osPriorityIdle, 0, 128);
-	Task_CtrlHandle = osThreadCreate(osThread(Task_Ctrl), NULL);
+  /* definition and creation of Task_Ctrl */
+  osThreadDef(Task_Ctrl, StartTask_Ctrl, osPriorityIdle, 0, 128);
+  Task_CtrlHandle = osThreadCreate(osThread(Task_Ctrl), NULL);
 
-	/* definition and creation of Task_MPU6050 */
-	osThreadDef(Task_MPU6050, StartTaskMPU6050, osPriorityIdle, 0, 128);
-	Task_MPU6050Handle = osThreadCreate(osThread(Task_MPU6050), NULL);
+  /* definition and creation of Task_MPU6050 */
+  osThreadDef(Task_MPU6050, StartTaskMPU6050, osPriorityIdle, 0, 128);
+  Task_MPU6050Handle = osThreadCreate(osThread(Task_MPU6050), NULL);
 
-	/* USER CODE BEGIN RTOS_THREADS */
+  /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
-	/* USER CODE END RTOS_THREADS */
+  /* USER CODE END RTOS_THREADS */
 
-	/* USER CODE BEGIN RTOS_QUEUES */
+  /* USER CODE BEGIN RTOS_QUEUES */
 	/* add queues, ... */
-	/* USER CODE END RTOS_QUEUES */
+  /* USER CODE END RTOS_QUEUES */
 }
 
 /* StartDefaultTask function */
-void StartDefaultTask(void const *argument)
+void StartDefaultTask(void const * argument)
 {
 
-	/* USER CODE BEGIN StartDefaultTask */
+  /* USER CODE BEGIN StartDefaultTask */
 	uint8_t LedTime;
 	TF_READY = 0x03;
 	while (TF_READY)
 		osDelay(200);
-	printf("Im Ready!\r\nW/A:Up/Down\r\nA/D:Left/Right\r\nQ:Quit\r\nE:Enable\r\n");
-	printf("R:Reset\r\nEnter/N:ReadyRun\r\n");
+	printf("Im Ready!\r\nW/A:Up/Down\tA/D:Min/Add\r\nQ:PrePanel(Quit)\tE:NextPanel(Enable)\r\n");
+	printf("R:Reset\tC:Calibrate\r\nEnter/N:ReadyRun\r\n\n");
 	/* Infinite loop */
 	for (;;)
 	{
@@ -232,13 +240,13 @@ void StartDefaultTask(void const *argument)
 		// else
 		// 	GUI_Edit();
 	}
-	/* USER CODE END StartDefaultTask */
+  /* USER CODE END StartDefaultTask */
 }
 
 /* StartTask_Ctrl function */
-void StartTask_Ctrl(void const *argument)
+void StartTask_Ctrl(void const * argument)
 {
-	/* USER CODE BEGIN StartTask_Ctrl */
+  /* USER CODE BEGIN StartTask_Ctrl */
 	//HR04
 	HR04_Config();
 	osDelay(1000);
@@ -272,6 +280,7 @@ void StartTask_Ctrl(void const *argument)
 		if (KEY_IS_DOWN(1))
 		{
 			//Inte Calibration Zero
+			value_servo = 0;
 			//Dead 2Second
 			osDelay(2000);
 			Flag_Mode = FLAG_MODE_CALI_G;
@@ -281,13 +290,13 @@ void StartTask_Ctrl(void const *argument)
 			Value_CaliT = 0;
 		}
 	}
-	/* USER CODE END StartTask_Ctrl */
+  /* USER CODE END StartTask_Ctrl */
 }
 
 /* StartTaskMPU6050 function */
-void StartTaskMPU6050(void const *argument)
+void StartTaskMPU6050(void const * argument)
 {
-	/* USER CODE BEGIN StartTaskMPU6050 */
+  /* USER CODE BEGIN StartTaskMPU6050 */
 	MPU_Datas datas_base;
 	do
 	{
@@ -349,7 +358,7 @@ void StartTaskMPU6050(void const *argument)
 				osDelay(3);
 		}
 	}
-	/* USER CODE END StartTaskMPU6050 */
+  /* USER CODE END StartTaskMPU6050 */
 }
 
 /* USER CODE BEGIN Application */
@@ -380,13 +389,26 @@ void GUI_Key(void)
 			USART_CLEAR;
 			GUI_Edit(0xFFFF);
 		}
-		else if (USART_IS_KEY(buf, 'R'))
+		else if (USART_IS_KEY(buf, 'C'))
 		{
 			Flag_Mode = FLAG_MODE_CALI_G;
 			Value_CaliGx = 0;
 			Value_CaliGy = 0;
 			Value_CaliGz = 0;
 			Value_CaliT = 0;
+		}
+		else if(USART_IS_KEY(buf, 'R'))
+		{
+			Flag_Mode = 0;
+			Flag_Dir = 1;
+			Flag_Step = 0;
+			Flag_Angle = 0;
+			value_servo = 0;
+			value_pDis = 0;
+			data_q.x = 0;
+			data_q.y = 0;
+			data_q.z = 0;
+			data_q.w = 1;
 		}
 		else if (buf == '\r' || buf == '\n' || USART_IS_KEY(buf, 'N'))
 		{
@@ -426,16 +448,16 @@ void GUI_Key(void)
 }
 void GUI_View(void)
 {
+	printf("View\r");
 	if (Flag_Mode == FLAG_MODE_CALI_G)
 	{
 		printf("\x1b[1BCALI:*G%d*   \r\x1b[1A", Value_CaliGz);
 	}
 	else
 	{
-		printf("\x1b[1BANGLE:*G%-.1f,%-.1f,%-.1f*   \r\x1b[1A",
-			   data_angle.x * 57.2957795f,
-			   data_angle.y * 57.2957795f,
-			   data_angle.z * 57.2957795f);
+		printf("\x1b[1B*GAngleZ:%-.1f,Servo:%-d*   \r\x1b[1A",
+			   data_angle.z * 57.2957795f,
+			   value_servo * 90 / 1000);
 	}
 	if (TF_HR04)
 	{
@@ -452,6 +474,7 @@ void GUI_View(void)
 #define BG_NORMAL printf("\033[0m")
 void GUI_Edit(uint16_t upd_items)
 {
+	printf("Edit\r");
 	if (upd_items & (0x0001 << 0))
 	{
 		if (GUI_Sele == 0)
@@ -529,6 +552,8 @@ void Step_Ready(void)
 		if (data_angle.x < ANGLE_READY && data_angle.x > -ANGLE_READY)
 		{
 			Flag_Mode = FLAG_MODE_RUN;
+			Flag_Dir = 1;
+			value_pDis = 0;
 		}
 	}
 }
@@ -583,14 +608,6 @@ void Step_Run(void)
 		value_angle0 -= (data_angle.z + value_angle0) / 64;
 	}
 }
-//TURN_ANGLE Servo
-#define TURN_ANGLE (-Para_TURN_ANGLE * 1000 / 90)
-#define DIS_DIFF Para_DIS_DIFF
-uint8_t Flag_Dir = 1;
-int16_t Flag_Angle;
-uint16_t value_pDis;
-uint8_t *NearSorX1;
-uint8_t *NearSorX2;
 //Obs
 void Step_Obs(void)
 {
@@ -638,7 +655,9 @@ void Step_Obs(void)
 		}
 	}
 	//ÅÐ¶ÏLR1ÕÏ°­
-	if (NS_IS_PRESS(NearSorL1))
+	if(NS_IS_PRESS(NearSorL1) && NS_IS_PRESS(NearSorR1))
+		value_servo = Flag_Angle;
+	else if (NS_IS_PRESS(NearSorL1))
 		value_servo = -TURN_ANGLE;
 	else if (NS_IS_PRESS(NearSorR1))
 		value_servo = TURN_ANGLE;
