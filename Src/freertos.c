@@ -133,6 +133,7 @@ int16_t value_servo0 = -73;
 //#Obs
 //TURN_ANGLE Servo
 #define TURN_ANGLE (-Para_TURN_ANGLE * 1000 / 90)
+#define TURN_BACK (Para_TURN_BACK * 1000 / 90)
 #define DIS_DIFF Para_DIS_DIFF
 uint8_t Flag_Dir = 1;
 int16_t Flag_Angle;
@@ -143,12 +144,13 @@ uint8_t *NearSorX2;
 uint8_t GUI_Mode = 0;
 uint8_t GUI_Sele = 0;
 //#Para
-#define Para_Len 4
-uint16_t Para_List[Para_Len] = {15, 80, 25, 20};
+#define Para_Len 5
+uint16_t Para_List[Para_Len] = {15, 80, 25, 5, 20};
 #define Para_ANGLE_READY Para_List[0] //15
 #define Para_OBS_DIS Para_List[1]	 //80
 #define Para_TURN_ANGLE Para_List[2]  //25
-#define Para_DIS_DIFF Para_List[3]	//20
+#define Para_TURN_BACK Para_List[3]  //5
+#define Para_DIS_DIFF Para_List[4]	//20
 /* USER CODE END Variables */
 
 /* Function prototypes -------------------------------------------------------*/
@@ -372,7 +374,7 @@ uint8_t USART1_Get(void)
 	return 0;
 }
 #define USART_IS_KEY(buf, key) ((buf == key) || (buf == (key - 'A' + 'a')))
-#define USART_CLEAR printf("\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\x1b[4A");
+#define USART_CLEAR printf("\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\x1b[1B\x1b[K\x1b[5A");
 void GUI_Key(void)
 {
 	uint8_t buf;
@@ -508,7 +510,16 @@ void GUI_Edit(uint16_t upd_items)
 			BG_SELECT;
 		else
 			BG_NORMAL;
-		printf("\x1b[4B*P:DisDiff:%d  *  \r\x1b[4A",
+		printf("\x1b[4B*P:TurnBack:%d  *  \r\x1b[4A",
+			   Para_TURN_BACK);
+	}
+	if (upd_items & (0x0001 << 4))
+	{
+		if (GUI_Sele == 4)
+			BG_SELECT;
+		else
+			BG_NORMAL;
+		printf("\x1b[5B*P:DisDiff:%d  *  \r\x1b[5A",
 			   Para_DIS_DIFF);
 	}
 	BG_NORMAL;
@@ -633,7 +644,7 @@ void Step_Obs(void)
 	{
 		//判断突变
 		if ((HR04_GetFloatCm(0) - value_pDis > DIS_DIFF) || (NS_IS_UP(*NearSorX1)))
-			Flag_Angle = 0;
+			Flag_Angle = TURN_BACK;
 		//判断准备经过障碍
 		if (NS_IS_PRESS(*NearSorX2))
 		{
