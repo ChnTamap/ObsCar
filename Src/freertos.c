@@ -73,15 +73,15 @@ uint8_t TF_MPU6050 = 0;
 enum
 {
 	FLAG_MODE_CLOSE = 0,
-	FLAG_MODE_CALI_G, //��̬У��������Gyro
-	FLAG_MODE_READY,  //׼������
-	FLAG_MODE_CALI_S, //��̬У����value_Servo
-	FLAG_MODE_CALI_T, //��̬�������ԽǶ�Theta
-	FLAG_MODE_RUN,	//�ȶ����н׶�
-	FLAG_MODE_OBS	 //���Ͻ׶�
+	FLAG_MODE_CALI_G, //静态校零陀螺仪Gyro
+	FLAG_MODE_READY,  //准备滑行
+	FLAG_MODE_CALI_S, //动态校零舵机value_Servo
+	FLAG_MODE_CALI_T, //动态修正绝对角度Theta
+	FLAG_MODE_RUN,	//稳定滑行阶段
+	FLAG_MODE_OBS	 //避障阶段
 };
 uint8_t Flag_Mode = 0;
-//���Ͻ׶�
+//避障阶段
 uint8_t Flag_Step = 0;
 int32_t Value_CaliGx, Value_CaliGy, Value_CaliGz;
 uint16_t Value_CaliT = 0;
@@ -642,30 +642,30 @@ void Step_Obs(void)
 	}
 	if (Flag_Step == 1)
 	{
-		//�ж�ͻ��
+		//判断突变
 		if ((HR04_GetFloatCm(0) - value_pDis > DIS_DIFF) || (NS_IS_UP(*NearSorX1)))
 			Flag_Angle = TURN_BACK;
-		//�ж�׼�������ϰ�
+		//判断准备经过障碍
 		if (NS_IS_PRESS(*NearSorX2))
 		{
 			Flag_Step++;
 		}
 		value_pDis = HR04_GetFloatCm(0);
-		//����
+		//避障
 		value_servo = Flag_Angle;
 	}
 	else if (Flag_Step == 2)
 	{
-		//�жϳ����ϰ�
+		//判断超过障碍
 		if (NS_IS_RES(*NearSorX2))
 		{
-			//�л�����
+			//切换方向
 			Flag_Step = 0;
 			Flag_Dir = !Flag_Dir;
 			value_pDis = 400;
 		}
 	}
-	//�ж�LR1�ϰ�
+	//判断LR1障碍
 	if(NS_IS_PRESS(NearSorL1) && NS_IS_PRESS(NearSorR1))
 		value_servo = Flag_Angle;
 	else if (NS_IS_PRESS(NearSorL1))
