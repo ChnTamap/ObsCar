@@ -133,7 +133,7 @@ int16_t value_servo0 = -73;
 //#Obs
 //TURN_ANGLE Servo
 #define TURN_ANGLE (-Para_TURN_ANGLE * 1000 / 90)
-#define TURN_BACK (Para_TURN_BACK * 1000 / 90)
+#define TURN_BACK (-Para_TURN_BACK * 1000 / 90)
 #define DIS_DIFF Para_DIS_DIFF
 uint8_t Flag_Dir = 1;
 int16_t Flag_Angle;
@@ -577,6 +577,7 @@ void Step_Run(void)
 	if (HR04_GetIntCm(0) < OBS_DIS || NS_IS_PRESS(NearSorL1) || NS_IS_PRESS(NearSorR1))
 	{
 		Flag_Mode = FLAG_MODE_OBS;
+		value_pDis = OBS_DIS;
 		Flag_Step = 0;
 		return;
 	}
@@ -644,7 +645,7 @@ void Step_Obs(void)
 	{
 		//判断突变
 		if ((HR04_GetFloatCm(0) - value_pDis > DIS_DIFF) || (NS_IS_UP(*NearSorX1)))
-			Flag_Angle = TURN_BACK;
+			Flag_Angle = Flag_Dir?TURN_BACK:-TURN_BACK;
 		//判断准备经过障碍
 		if (NS_IS_PRESS(*NearSorX2))
 		{
