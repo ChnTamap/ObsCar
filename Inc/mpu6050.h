@@ -6,10 +6,10 @@
 
 #define ADDR_MPU6050_WRITE 0xD0
 #define ADDR_MPU6050_READ (ADDR_MPU6050_WRITE | 0x01)
-#define REG_SMPLRT_DIV 0x19   //ÍÓÂÝÒÇ²ÉÑùÂÊ£¬µäÐÍÖµ£º0x07(125Hz)
-#define REG_CONFIG 0x1A		  //µÍÍ¨ÂË²¨ÆµÂÊ£¬µäÐÍÖµ£º0x06(5Hz)
-#define REG_GYRO_CONFIG 0x1B  //ÍÓÂÝÒÇ×Ô¼ì¼°²âÁ¿·¶Î§£¬µäÐÍÖµ£º0x18(²»×Ô¼ì£¬2000deg/s)
-#define REG_ACCEL_CONFIG 0x1C //¼ÓËÙ¼Æ×Ô¼ì¡¢²âÁ¿·¶Î§¼°¸ßÍ¨ÂË²¨ÆµÂÊ£¬µäÐÍÖµ£º0x01(²»×Ô¼ì£¬2G£¬5Hz)
+#define REG_SMPLRT_DIV 0x19   //ï¿½ï¿½ï¿½ï¿½ï¿½Ç²ï¿½ï¿½ï¿½ï¿½Ê£ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0x07(125Hz)
+#define REG_CONFIG 0x1A		  //ï¿½ï¿½Í¨ï¿½Ë²ï¿½Æµï¿½Ê£ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0x06(5Hz)
+#define REG_GYRO_CONFIG 0x1B  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ì¼°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0x18(ï¿½ï¿½ï¿½Ô¼ì£¬2000deg/s)
+#define REG_ACCEL_CONFIG 0x1C //ï¿½ï¿½ï¿½Ù¼ï¿½ï¿½Ô¼ì¡¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½Í¨ï¿½Ë²ï¿½Æµï¿½Ê£ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0x01(ï¿½ï¿½ï¿½Ô¼ì£¬2Gï¿½ï¿½5Hz)
 #define REG_ACCEL_XOUT_H 0x3B
 #define REG_ACCEL_XOUT_L 0x3C
 #define REG_ACCEL_YOUT_H 0x3D
@@ -24,8 +24,8 @@
 #define REG_GYRO_YOUT_L 0x46
 #define REG_GYRO_ZOUT_H 0x47
 #define REG_GYRO_ZOUT_L 0x48
-#define REG_PWR_MGMT_1 0x6B //µçÔ´¹ÜÀí£¬µäÐÍÖµ£º0x00(Õý³£ÆôÓÃ)
-#define REG_WHO_AM_I 0x75   //IICµØÖ·¼Ä´æÆ÷(Ä¬ÈÏÊýÖµ0x68£¬Ö»¶Á)
+#define REG_PWR_MGMT_1 0x6B //ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0x00(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+#define REG_WHO_AM_I 0x75   //IICï¿½ï¿½Ö·ï¿½Ä´ï¿½ï¿½ï¿½(Ä¬ï¿½ï¿½ï¿½ï¿½Öµ0x68ï¿½ï¿½Ö»ï¿½ï¿½)
 
 typedef struct
 {
@@ -58,7 +58,7 @@ HAL_StatusTypeDef MPU_WriteByte(uint8_t addr, uint8_t value);
 HAL_StatusTypeDef MPU_Read(uint8_t addr, uint8_t *value, uint8_t len);
 
 void MPU_TurnWordHL(uint16_t *buf);
-void MPU_GetIntDatas(MPU_Datas *datas);
+HAL_StatusTypeDef MPU_GetIntDatas(MPU_Datas *datas);
 void MPU_GetFloatDatas(MPU_V3D *vA, MPU_V3D *vG, MPU_Datas *datas);
 
 void MPU_QuatMulV3d(MPU_V3D *vo, MPU_Quat *q, MPU_V3D *v);

@@ -38,6 +38,7 @@
 
 /* USER CODE BEGIN 0 */
 #include "HR04.h"
+#include "log.h"
 extern uint8_t TF_MPU6050;
 extern uint16_t EncodeSor[2];
 uint32_t Clock_MPU6050;
@@ -163,6 +164,7 @@ void SysTick_Handler(void)
     Clock_MPU6050 = 5 - 1;
     TF_MPU6050 = 1;
   }
+  Log_Time++;
   /* USER CODE END SysTick_IRQn 0 */
   osSystickHandler();
   /* USER CODE BEGIN SysTick_IRQn 1 */

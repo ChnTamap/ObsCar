@@ -2,6 +2,42 @@
 #define M_PI 3.1415926535897932f
 #include "math.h"
 
+void MPU_OutBusy(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	HAL_I2C_MspDeInit(&hi2c1);
+
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	while (1)
+	{
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
+		if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_9) == GPIO_PIN_SET)
+		{
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
+
+			GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+			GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+			GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_8;
+			HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+			MX_I2C1_Init();
+			HAL_I2C_MspInit(&hi2c1);
+
+			return;
+		}
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	}
+}
+
 /* 
 ACC_CFG	GYR_CFG
 00	2g	00	250
@@ -23,6 +59,7 @@ HAL_StatusTypeDef MPU_Init(uint8_t timeout)
 		if (sta == HAL_OK)
 			return HAL_OK;
 	}
+	MPU_OutBusy();
 	return HAL_ERROR;
 }
 
@@ -44,15 +81,21 @@ void MPU_TurnWordHL(uint16_t *buf)
 	*(((uint8_t *)buf) + 1) = tmp;
 }
 
-void MPU_GetIntDatas(MPU_Datas *datas)
+HAL_StatusTypeDef MPU_GetIntDatas(MPU_Datas *datas)
 {
 	uint32_t i;
+	HAL_StatusTypeDef sta;
 	MPU_Read(REG_ACCEL_XOUT_H, (uint8_t *)(datas), 6);
-	MPU_Read(REG_GYRO_XOUT_H, (uint8_t *)(datas) + 6, 6);
+	sta = MPU_Read(REG_GYRO_XOUT_H, (uint8_t *)(datas) + 6, 6);
 	for (i = 0; i < 6; i++)
 	{
 		MPU_TurnWordHL((uint16_t *)datas + i);
 	}
+	if (sta != HAL_OK)
+	{
+		MPU_OutBusy();
+	}
+	return sta;
 }
 
 #define MPU_ACC_LSB (2.f / 32768)				  //LSB/g
@@ -183,7 +226,7 @@ void MPU_Filter(MPU_V3D *vG, MPU_V3D *vA, MPU_V3D *eInt, MPU_Quat *q, float half
 
 void MPU_GetAngle(MPU_Quat *q, float *roll, float *pitch, float *yaw)
 {
-	*roll = asin(2.f * (q->x * q->y + q->z * q->w));// * 57.2957795f;
-	*pitch = asin(2.f * (q->z * q->x + q->y * q->w));// * 57.2957795f;
-	*yaw = asin(2.f * (q->y * q->z + q->x * q->w));// * 57.2957795f;
+	*roll = asin(2.f * (q->x * q->y + q->z * q->w));  // * 57.2957795f;
+	*pitch = asin(2.f * (q->z * q->x + q->y * q->w)); // * 57.2957795f;
+	*yaw = asin(2.f * (q->y * q->z + q->x * q->w));   // * 57.2957795f;
 }

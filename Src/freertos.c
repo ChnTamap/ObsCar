@@ -52,11 +52,7 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */     
-#include "tim.h"
-#include "MPU6050.h"
-#include "HR04.h"
-#include "PID.h"
-#include "math.h"
+#include "freertos_var.h"
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -65,92 +61,6 @@ osThreadId Task_CtrlHandle;
 osThreadId Task_MPU6050Handle;
 
 /* USER CODE BEGIN Variables */
-//#Math
-#define M_PI 3.14159265358f
-//#Data
-uint8_t TF_READY = 0xFF;
-uint8_t TF_MPU6050 = 0;
-enum
-{
-	FLAG_MODE_CLOSE = 0,
-	FLAG_MODE_CALI_G, //静态校零陀螺仪Gyro
-	FLAG_MODE_READY,  //准备滑行
-	FLAG_MODE_CALI_S, //动态校零舵机value_Servo
-	FLAG_MODE_CALI_T, //动态修正绝对角度Theta
-	FLAG_MODE_RUN,	//稳定滑行阶段
-	FLAG_MODE_OBS	 //避障阶段
-};
-uint8_t Flag_Mode = 0;
-//避障阶段
-uint8_t Flag_Step = 0;
-int32_t Value_CaliGx, Value_CaliGy, Value_CaliGz;
-uint16_t Value_CaliT = 0;
-uint16_t EncodeSor[2] = {0, 0};
-uint8_t NearSor[4];
-#define NearSorL1 NearSor[1]
-#define NearSorL2 NearSor[0]
-#define NearSorR1 NearSor[2]
-#define NearSorR2 NearSor[3]
-#define NS_IS_DOWN(v) (v == 0x80)
-#define NS_IS_PRESS(v) (v == 0x00)
-#define NS_IS_UP(v) (v == 0x7F)
-#define NS_IS_RES(v) (v == 0xFF)
-MPU_Datas datas;
-MPU_V3D data_acc;
-MPU_V3D data_gyro;
-MPU_V3D data_angle;
-MPU_V3D data_gEInt;
-MPU_Quat data_q = {0, 0, 0, 1};
-MPU_Quat data_baseQ = {0, 0, 0, 1};
-#define KEY_DOWN 0x80
-#define KEY_UP 0x00
-#define KEY_LONG (KEY_DOWN + 60)
-#define KEY_IS_DOWN(i) (KeySta[i] == KEY_DOWN)
-#define KEY_IS_PRESS(i) (KeySta[i] >= KEY_DOWN)
-#define KEY_IS_UP(i) (KeySta[i] == KEY_UP)
-#define KEY_IS_RES(i) (KeySta[i] < KEY_DOWN)
-#define KEY_IS_LDOWN(i) (KeySta[i] == KEY_LONG)
-#define KEY_IS_LPRESS(i) (KeySta[i] >= KEY_LONG)
-uint8_t KeySta[2];
-//#PID
-/*
-HR04_GetFloatCm -> vL
-data_angle.z -> vTheta
-*/
-PID_TypeDef pidL = {1 / (100.f), 0, 0, 1};
-PID_TypeDef pidA = {1 / (M_PI / 2), 0, 0, 1};
-//Distance to wall:L
-float value_Len;
-const float set_Len = 60.f;
-//Angle theta of car:theta
-/*float data_angle.z*/
-float value_angle;
-float value_angle0 = 0;
-float set_angle = 0;
-//Angle of servo
-int16_t value_servo = 0;
-int16_t value_servo0 = -73;
-//#Obs
-//TURN_ANGLE Servo
-#define TURN_ANGLE (-Para_TURN_ANGLE * 1000 / 90)
-#define TURN_BACK (-Para_TURN_BACK * 1000 / 90)
-#define DIS_DIFF Para_DIS_DIFF
-uint8_t Flag_Dir = 1;
-int16_t Flag_Angle;
-uint16_t value_pDis;
-uint8_t *NearSorX1;
-uint8_t *NearSorX2;
-//#GUI
-uint8_t GUI_Mode = 0;
-uint8_t GUI_Sele = 0;
-//#Para
-#define Para_Len 5
-uint16_t Para_List[Para_Len] = {15, 80, 25, 5, 20};
-#define Para_ANGLE_READY Para_List[0] //15
-#define Para_OBS_DIS Para_List[1]	 //80
-#define Para_TURN_ANGLE Para_List[2]  //25
-#define Para_TURN_BACK Para_List[3]  //5
-#define Para_DIS_DIFF Para_List[4]	//20
 /* USER CODE END Variables */
 
 /* Function prototypes -------------------------------------------------------*/
@@ -169,6 +79,7 @@ void Cali_Alpha(void);
 void Step_Ready(void);
 void Step_Run(void);
 void Step_Obs(void);
+//Log function
 /* USER CODE END FunctionPrototypes */
 
 /* Hook prototypes */
@@ -223,7 +134,7 @@ void StartDefaultTask(void const * argument)
 	TF_READY = 0x03;
 	while (TF_READY)
 		osDelay(200);
-	printf("Im Ready!\r\nW/A:Up/Down\tA/D:Min/Add\r\nQ:PrePanel(Quit)\tE:NextPanel(Enable)\r\n");
+	printf("Im Ready!\r\nW/A:Up/Down\tA/D:Min/Add\r\nQ:PrePanel(Quit)\tE:NextPanel(Enable)\r\nL:ON/OFF Log");
 	printf("R:Reset\tC:Calibrate\r\nEnter/N:ReadyRun\r\n\n");
 	/* Infinite loop */
 	for (;;)
@@ -321,7 +232,7 @@ void StartTaskMPU6050(void const * argument)
 		if (TF_MPU6050)
 		{
 			TF_MPU6050 = 0;
-			MPU_GetIntDatas(&datas);
+			Flag_I2C = MPU_GetIntDatas(&datas);
 
 			if (Flag_Mode == FLAG_MODE_CALI_G)
 			{
@@ -399,7 +310,7 @@ void GUI_Key(void)
 			Value_CaliGz = 0;
 			Value_CaliT = 0;
 		}
-		else if(USART_IS_KEY(buf, 'R'))
+		else if (USART_IS_KEY(buf, 'R'))
 		{
 			Flag_Mode = 0;
 			Flag_Dir = 1;
@@ -411,10 +322,16 @@ void GUI_Key(void)
 			data_q.y = 0;
 			data_q.z = 0;
 			data_q.w = 1;
+			printf("\x1b[2J\x1b[0;0H");
+		}
+		else if (USART_IS_KEY(buf, 'L'))
+		{
+			Log_Enable = !Log_Enable;
 		}
 		else if (buf == '\r' || buf == '\n' || USART_IS_KEY(buf, 'N'))
 		{
 			Flag_Mode = FLAG_MODE_READY;
+			Flag_Step = 0;
 		}
 	}
 	else
@@ -450,27 +367,47 @@ void GUI_Key(void)
 }
 void GUI_View(void)
 {
-	printf("View\r");
-	if (Flag_Mode == FLAG_MODE_CALI_G)
+	Log_SendLoop();
+	printf("\x1b[KView %c\r", Log_Enable ? 'L' : ' ');
+	if (Flag_I2C == HAL_OK)
 	{
-		printf("\x1b[1BCALI:*G%d*   \r\x1b[1A", Value_CaliGz);
+		if (Flag_Mode == FLAG_MODE_CALI_G)
+		{
+			printf("\x1b[1BCALI:*G%d*", Value_CaliGz);
+			printf(",%d", Value_CaliT);
+			printf("   \r\x1b[1A");
+		}
+		else
+		{
+			printf("\x1b[1B\x1b[K*GAngleZ:%-.1f",
+				   data_angle.z * 57.2957795f);
+			printf(",Servo:%-d*   \r\x1b[1A",
+				   value_servo * 90 / 1000);
+		}
 	}
 	else
 	{
-		printf("\x1b[1B*GAngleZ:%-.1f,Servo:%-d*   \r\x1b[1A",
-			   data_angle.z * 57.2957795f,
+		if (Flag_I2C == HAL_ERROR)
+			printf("\x1b[1B\x1b[K*GAngleZ:ERROR");
+		else if (Flag_I2C == HAL_BUSY)
+			printf("\x1b[1B\x1b[K*GAngleZ:BUSY");
+		else if (Flag_I2C == HAL_TIMEOUT)
+			printf("\x1b[1B\x1b[K*GAngleZ:TIMEOUT");
+		printf(",Servo:%-d*   \r\x1b[1A",
 			   value_servo * 90 / 1000);
 	}
+
 	if (TF_HR04)
 	{
 		TF_HR04 = 0;
-		printf("\x1b[2B*DHR04:%dcm  \t%dcm  *  \r\x1b[2A",
+		printf("\x1b[2B\x1b[K*DHR04:%dcm  \t%dcm  *  \r\x1b[2A",
 			   HR04_GetIntCm(0), HR04_GetIntCm(1));
 	}
-	printf("\x1b[3B*SNear:%02X\t%02X\t%02X\t%02X\t*	\r\x1b[3A",
+	printf("\x1b[3B\x1b[K*SNear:%02X\t%02X\t%02X\t%02X\t*	\r\x1b[3A",
 		   NearSor[0], NearSor[1], NearSor[2], NearSor[3]);
-	printf("\x1b[4B*PMode:%d,Step:%d*    \r\x1b[4A",
+	printf("\x1b[4B\x1b[K*PMode:%d,Step:%d*    \r\x1b[4A",
 		   Flag_Mode, Flag_Step);
+	printf("\x1b[4B\n\x1b[5A");
 }
 #define BG_SELECT printf("\033[46;30m")
 #define BG_NORMAL printf("\033[0m")
@@ -569,6 +506,10 @@ void Step_Ready(void)
 	}
 }
 #define OBS_DIS Para_OBS_DIS
+void Log_StartObs(void)
+{
+	printf("\r\x1b[K%d\tObsStart\r\n", Log_Time);
+}
 //Run
 void Step_Run(void)
 {
@@ -579,6 +520,7 @@ void Step_Run(void)
 		Flag_Mode = FLAG_MODE_OBS;
 		value_pDis = OBS_DIS;
 		Flag_Step = 0;
+		Log_Save(Log_StartObs);
 		return;
 	}
 	//vA = A+A0
@@ -620,6 +562,16 @@ void Step_Run(void)
 		value_angle0 -= (data_angle.z + value_angle0) / 64;
 	}
 }
+uint8_t Log_TurnBack_value = 0;
+void Log_TurnBack(void)
+{
+	printf("\r\x1b[K%d", Log_Time);
+	if (Log_TurnBack_value)
+		printf("\tTurn back:DisDiff,FlagAngle");
+	else
+		printf("\tTurn back:NearSor,FlagAngle");
+	printf(":%d\r\n", Flag_Angle * 90 / 1000);
+}
 //Obs
 void Step_Obs(void)
 {
@@ -644,8 +596,18 @@ void Step_Obs(void)
 	if (Flag_Step == 1)
 	{
 		//判断突变
-		if ((HR04_GetFloatCm(0) - value_pDis > DIS_DIFF) || (NS_IS_UP(*NearSorX1)))
-			Flag_Angle = Flag_Dir?TURN_BACK:-TURN_BACK;
+		if ((HR04_GetFloatCm(0) - value_pDis > DIS_DIFF))
+		{
+			Log_TurnBack_value = 1;
+			Log_Save(Log_TurnBack);
+			Flag_Angle = Flag_Dir ? TURN_BACK : -TURN_BACK;
+		}
+		if ((NS_IS_UP(*NearSorX1)))
+		{
+			Log_TurnBack_value = 0;
+			Log_Save(Log_TurnBack);
+			Flag_Angle = Flag_Dir ? TURN_BACK : -TURN_BACK;
+		}
 		//判断准备经过障碍
 		if (NS_IS_PRESS(*NearSorX2))
 		{
@@ -667,7 +629,7 @@ void Step_Obs(void)
 		}
 	}
 	//判断LR1障碍
-	if(NS_IS_PRESS(NearSorL1) && NS_IS_PRESS(NearSorR1))
+	if (NS_IS_PRESS(NearSorL1) && NS_IS_PRESS(NearSorR1))
 		value_servo = Flag_Angle;
 	else if (NS_IS_PRESS(NearSorL1))
 		value_servo = -TURN_ANGLE;
