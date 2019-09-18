@@ -109,11 +109,11 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of Task_Ctrl */
-  osThreadDef(Task_Ctrl, StartTask_Ctrl, osPriorityIdle, 0, 128);
+  osThreadDef(Task_Ctrl, StartTask_Ctrl, osPriorityNormal, 0, 128);
   Task_CtrlHandle = osThreadCreate(osThread(Task_Ctrl), NULL);
 
   /* definition and creation of Task_MPU6050 */
-  osThreadDef(Task_MPU6050, StartTaskMPU6050, osPriorityIdle, 0, 128);
+  osThreadDef(Task_MPU6050, StartTaskMPU6050, osPriorityNormal, 0, 128);
   Task_MPU6050Handle = osThreadCreate(osThread(Task_MPU6050), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
