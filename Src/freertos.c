@@ -508,7 +508,8 @@ void Step_Ready(void)
 #define OBS_DIS Para_OBS_DIS
 void Log_StartObs(void)
 {
-	printf("\r\x1b[K%d\tObsStart\r\n", Log_Time);
+	printf("\r\x1b[K%d", Log_Time);
+	printf("\tObsStart\r\n");
 }
 //Run
 void Step_Run(void)

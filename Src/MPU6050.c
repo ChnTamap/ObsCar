@@ -4,9 +4,8 @@
 
 void MPU_OutBusy(void)
 {
-	GPIO_InitTypeDef GPIO_InitStruct;
-
-	HAL_I2C_MspDeInit(&hi2c1);
+	/*GPIO_InitTypeDef GPIO_InitStruct;
+	 HAL_I2C_MspDeInit(&hi2c1);
 
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
@@ -29,12 +28,22 @@ void MPU_OutBusy(void)
 			GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_8;
 			HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-			MX_I2C1_Init();
 			HAL_I2C_MspInit(&hi2c1);
+			MX_I2C1_Init();
 
-			return;
+			break;
 		}
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	} */
+	if (I2C1->SR2 & I2C_SR2_BUSY)
+	{
+		I2C1->CR1 |= I2C_CR1_SWRST;
+	}
+	if (I2C1->SR1 & I2C_SR1_TIMEOUT)
+	{
+		I2C1->CR1 &= I2C_CR1_PE;
+		I2C1->CR1 |= I2C_CR1_PE;
+		I2C1->CR1 |= I2C_CR1_SWRST;
 	}
 }
 
@@ -58,8 +67,8 @@ HAL_StatusTypeDef MPU_Init(uint8_t timeout)
 		sta += MPU_WriteByte(REG_GYRO_CONFIG, 0x00);
 		if (sta == HAL_OK)
 			return HAL_OK;
+		MPU_OutBusy();
 	}
-	MPU_OutBusy();
 	return HAL_ERROR;
 }
 
@@ -85,15 +94,12 @@ HAL_StatusTypeDef MPU_GetIntDatas(MPU_Datas *datas)
 {
 	uint32_t i;
 	HAL_StatusTypeDef sta;
+	MPU_OutBusy();
 	MPU_Read(REG_ACCEL_XOUT_H, (uint8_t *)(datas), 6);
 	sta = MPU_Read(REG_GYRO_XOUT_H, (uint8_t *)(datas) + 6, 6);
 	for (i = 0; i < 6; i++)
 	{
 		MPU_TurnWordHL((uint16_t *)datas + i);
-	}
-	if (sta != HAL_OK)
-	{
-		MPU_OutBusy();
 	}
 	return sta;
 }
