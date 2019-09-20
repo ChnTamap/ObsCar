@@ -27,6 +27,7 @@ void Log_SendLoop(void)
 	{
 		for (Log_pSend = 0; Log_pSend < Log_pSave; Log_pSend++)
 		{
+			printf("\r\x1b[K%d", Log_Time);
 			Log_Events[Log_pSend]();
 		}
 	}

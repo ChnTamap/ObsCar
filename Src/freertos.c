@@ -51,8 +51,9 @@
 #include "task.h"
 #include "cmsis_os.h"
 
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 #include "freertos_var.h"
+#include "main.h"
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -64,9 +65,9 @@ osThreadId Task_MPU6050Handle;
 /* USER CODE END Variables */
 
 /* Function prototypes -------------------------------------------------------*/
-void StartDefaultTask(void const * argument);
-void StartTask_Ctrl(void const * argument);
-void StartTaskMPU6050(void const * argument);
+void StartDefaultTask(void const *argument);
+void StartTask_Ctrl(void const *argument);
+void StartTaskMPU6050(void const *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -86,56 +87,57 @@ void Step_Obs(void);
 
 /* Init FreeRTOS */
 
-void MX_FREERTOS_Init(void) {
-  /* USER CODE BEGIN Init */
+void MX_FREERTOS_Init(void)
+{
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
+	/* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+	/* USER CODE END RTOS_MUTEX */
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
+	/* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
+	/* USER CODE END RTOS_SEMAPHORES */
 
-  /* USER CODE BEGIN RTOS_TIMERS */
+	/* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
+	/* USER CODE END RTOS_TIMERS */
 
-  /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+	/* Create the thread(s) */
+	/* definition and creation of defaultTask */
+	osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  /* definition and creation of Task_Ctrl */
-  osThreadDef(Task_Ctrl, StartTask_Ctrl, osPriorityNormal, 0, 128);
-  Task_CtrlHandle = osThreadCreate(osThread(Task_Ctrl), NULL);
+	/* definition and creation of Task_Ctrl */
+	osThreadDef(Task_Ctrl, StartTask_Ctrl, osPriorityNormal, 0, 128);
+	Task_CtrlHandle = osThreadCreate(osThread(Task_Ctrl), NULL);
 
-  /* definition and creation of Task_MPU6050 */
-  osThreadDef(Task_MPU6050, StartTaskMPU6050, osPriorityNormal, 0, 128);
-  Task_MPU6050Handle = osThreadCreate(osThread(Task_MPU6050), NULL);
+	/* definition and creation of Task_MPU6050 */
+	osThreadDef(Task_MPU6050, StartTaskMPU6050, osPriorityNormal, 0, 128);
+	Task_MPU6050Handle = osThreadCreate(osThread(Task_MPU6050), NULL);
 
-  /* USER CODE BEGIN RTOS_THREADS */
+	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
+	/* USER CODE END RTOS_THREADS */
 
-  /* USER CODE BEGIN RTOS_QUEUES */
+	/* USER CODE BEGIN RTOS_QUEUES */
 	/* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
+	/* USER CODE END RTOS_QUEUES */
 }
 
 /* StartDefaultTask function */
-void StartDefaultTask(void const * argument)
+void StartDefaultTask(void const *argument)
 {
 
-  /* USER CODE BEGIN StartDefaultTask */
+	/* USER CODE BEGIN StartDefaultTask */
 	uint8_t LedTime;
 	TF_READY = 0x03;
 	while (TF_READY)
 		osDelay(200);
 	printf("Im Ready!\r\nW/A:Up/Down\tA/D:Min/Add\r\nQ:PrePanel(Quit)\tE:NextPanel(Enable)\r\nL:ON/OFF Log");
-	printf("R:Reset\tC:Calibrate\r\nEnter/N:ReadyRun\r\n\n");
+	printf("R:Reset\tC:Calibrate\r\nEnter/N:ReadyRun\r\n\n\x1b[?25l");
 	/* Infinite loop */
 	for (;;)
 	{
@@ -149,17 +151,18 @@ void StartDefaultTask(void const * argument)
 
 		//View
 		if (GUI_Mode == 0)
+			GUI_Key(); //This Function will be change the GUI_Mode
+		if (GUI_Mode == 0)
 			GUI_View();
 		// else
-		// 	GUI_Edit();
 	}
-  /* USER CODE END StartDefaultTask */
+	/* USER CODE END StartDefaultTask */
 }
 
 /* StartTask_Ctrl function */
-void StartTask_Ctrl(void const * argument)
+void StartTask_Ctrl(void const *argument)
 {
-  /* USER CODE BEGIN StartTask_Ctrl */
+	/* USER CODE BEGIN StartTask_Ctrl */
 	//HR04
 	HR04_Config();
 	osDelay(1000);
@@ -183,7 +186,8 @@ void StartTask_Ctrl(void const * argument)
 
 		TIM3->CCR1 = 1500 + (value_servo - value_servo0);
 
-		GUI_Key();
+		if (GUI_Mode != 0)
+			GUI_Key();
 		Key_Loop();
 		if (KEY_IS_DOWN(0))
 		{
@@ -203,13 +207,13 @@ void StartTask_Ctrl(void const * argument)
 			Value_CaliT = 0;
 		}
 	}
-  /* USER CODE END StartTask_Ctrl */
+	/* USER CODE END StartTask_Ctrl */
 }
 
 /* StartTaskMPU6050 function */
-void StartTaskMPU6050(void const * argument)
+void StartTaskMPU6050(void const *argument)
 {
-  /* USER CODE BEGIN StartTaskMPU6050 */
+	/* USER CODE BEGIN StartTaskMPU6050 */
 	MPU_Datas datas_base;
 	do
 	{
@@ -271,7 +275,7 @@ void StartTaskMPU6050(void const * argument)
 				osDelay(3);
 		}
 	}
-  /* USER CODE END StartTaskMPU6050 */
+	/* USER CODE END StartTaskMPU6050 */
 }
 
 /* USER CODE BEGIN Application */
@@ -322,7 +326,7 @@ void GUI_Key(void)
 			data_q.y = 0;
 			data_q.z = 0;
 			data_q.w = 1;
-			printf("\x1b[2J\x1b[0;0H");
+			printf("\x1b[?25l\x1b[2J\x1b[0;0H");
 		}
 		else if (USART_IS_KEY(buf, 'L'))
 		{
@@ -456,7 +460,7 @@ void GUI_Edit(uint16_t upd_items)
 			BG_SELECT;
 		else
 			BG_NORMAL;
-		printf("\x1b[5B*P:DisDiff:%d  *  \r\x1b[5A",
+		printf("\x1b[5B*F:DisDiff:%d  *  \r\x1b[5A",
 			   Para_DIS_DIFF);
 	}
 	BG_NORMAL;
@@ -492,6 +496,10 @@ void Cali_Alpha(void)
 	value_servo0 = data_angle.z * 1000 / 90;
 }
 #define ANGLE_READY (Para_ANGLE_READY * M_PI / 180)
+void Log_StartRun(void)
+{
+	printf("\tStart Run\r\n");
+}
 //Ready
 void Step_Ready(void)
 {
@@ -502,14 +510,14 @@ void Step_Ready(void)
 			Flag_Mode = FLAG_MODE_RUN;
 			Flag_Dir = 1;
 			value_pDis = 0;
+			Log_Save(Log_StartRun);
 		}
 	}
 }
 #define OBS_DIS Para_OBS_DIS
 void Log_StartObs(void)
 {
-	printf("\r\x1b[K%d", Log_Time);
-	printf("\tObsStart\r\n");
+	printf("\tStart Obs\r\n");
 }
 //Run
 void Step_Run(void)
@@ -566,12 +574,19 @@ void Step_Run(void)
 uint8_t Log_TurnBack_value = 0;
 void Log_TurnBack(void)
 {
-	printf("\r\x1b[K%d", Log_Time);
 	if (Log_TurnBack_value)
 		printf("\tTurn back:DisDiff,FlagAngle");
 	else
 		printf("\tTurn back:NearSor,FlagAngle");
 	printf(":%d\r\n", Flag_Angle * 90 / 1000);
+}
+uint8_t Log_TurnAngle_value = 0;
+void Log_TurnAngle(void)
+{
+	if (Log_TurnAngle_value)
+		printf("\tTurn Left\r\n");
+	else
+		printf("\tTurn Right\r\n");
 }
 //Obs
 void Step_Obs(void)
@@ -584,6 +599,7 @@ void Step_Obs(void)
 			Flag_Angle = -TURN_ANGLE;
 			NearSorX1 = &(NearSorL1);
 			NearSorX2 = &(NearSorL2);
+			Log_TurnAngle_value = 0; //Log
 		}
 		else
 		{
@@ -591,7 +607,9 @@ void Step_Obs(void)
 			Flag_Angle = TURN_ANGLE;
 			NearSorX1 = &(NearSorR1);
 			NearSorX2 = &(NearSorR2);
+			Log_TurnAngle_value = 1; //Log
 		}
+		Log_Save(Log_TurnAngle); //Log
 		Flag_Step++;
 	}
 	if (Flag_Step == 1)

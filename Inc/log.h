@@ -7,6 +7,7 @@
 #define _LOG_H_
 
 #include "stm32f103xb.h"
+#include "stdio.h"
 
 //Def
 typedef void(*Log_Call)(void);

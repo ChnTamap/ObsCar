@@ -82,6 +82,10 @@
 #define Encode1_Pin GPIO_PIN_11
 #define Encode1_GPIO_Port GPIOB
 #define Encode1_EXTI_IRQn EXTI15_10_IRQn
+#define DEBUG1_Pin GPIO_PIN_12
+#define DEBUG1_GPIO_Port GPIOB
+#define DEBUG2_Pin GPIO_PIN_13
+#define DEBUG2_GPIO_Port GPIOB
 #define NearL1_Pin GPIO_PIN_3
 #define NearL1_GPIO_Port GPIOB
 #define NearL2_Pin GPIO_PIN_4
