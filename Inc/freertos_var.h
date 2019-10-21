@@ -14,15 +14,15 @@ enum
 {
 	FLAG_MODE_CLOSE = 0,
 	FLAG_MODE_CALI_G, //静态校零陀螺仪Gyro
-	FLAG_MODE_READY,  //准备滑行
+	FLAG_MODE_READY,  //准�?�滑�?
 	FLAG_MODE_CALI_S, //动态校零舵机value_Servo
-	FLAG_MODE_CALI_T, //动态修正绝对角度Theta
-	FLAG_MODE_RUN,	//稳定滑行阶段
-	FLAG_MODE_OBS	 //避障阶段
+	FLAG_MODE_CALI_T, //动态修正绝对�?�度Theta
+	FLAG_MODE_RUN,	//稳定滑�?�阶�?
+	FLAG_MODE_OBS	 //避障阶�??
 };
 uint8_t Flag_Mode = 0;
 HAL_StatusTypeDef Flag_I2C = HAL_OK;
-//避障阶段
+//避障阶�??
 uint8_t Flag_Step = 0;
 int32_t Value_CaliGx, Value_CaliGy, Value_CaliGz;
 uint16_t Value_CaliT = 0;
@@ -86,7 +86,7 @@ uint8_t GUI_Mode = 0;
 uint8_t GUI_Sele = 0;
 //#Para
 #define Para_Len 5
-uint16_t Para_List[Para_Len] = {15, 80, 25, 5, 50};
+uint16_t Para_List[Para_Len] = {8, 95, 18, 17, 100};
 #define Para_ANGLE_READY Para_List[0] //15
 #define Para_OBS_DIS Para_List[1]	 //80
 #define Para_TURN_ANGLE Para_List[2]  //25
