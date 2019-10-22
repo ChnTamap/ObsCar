@@ -326,6 +326,7 @@ void GUI_Key(void)
 			data_q.y = 0;
 			data_q.z = 0;
 			data_q.w = 1;
+			Log_Time = 0;
 			printf("\x1b[?25l\x1b[2J\x1b[0;0H");
 		}
 		else if (USART_IS_KEY(buf, 'L'))
@@ -460,7 +461,16 @@ void GUI_Edit(uint16_t upd_items)
 			BG_SELECT;
 		else
 			BG_NORMAL;
-		printf("\x1b[5B*F:DisDiff:%d  *  \r\x1b[5A",
+		printf("\x1b[5B*M:TurnMax:%d  *  \r\x1b[5A",
+			   Para_TURN_MAX);
+	}
+	if (upd_items & (0x0001 << 5))
+	{
+		if (GUI_Sele == 5)
+			BG_SELECT;
+		else
+			BG_NORMAL;
+		printf("\x1b[6B*F:DisDiff:%d  *  \r\x1b[6A",
 			   Para_DIS_DIFF);
 	}
 	BG_NORMAL;
@@ -572,12 +582,18 @@ void Step_Run(void)
 	}
 }
 uint8_t Log_TurnBack_value = 0;
+uint8_t Log_TurnMax_value = 0;
 void Log_TurnBack(void)
 {
 	if (Log_TurnBack_value)
 	{
 		printf("\tTurn back:DisDiff ");
 		printf(":%d\r\n", Log_TurnBack_value);
+	}
+	if (Log_TurnMax_value)
+	{
+		printf("\tTurn back:Max ");
+		printf(":%d\r\n", Log_TurnMax_value);
 	}
 	else
 		printf("\tTurn back:NearSor\r\n");
@@ -597,7 +613,7 @@ void Step_Obs(void)
 	{
 		if (Flag_Dir)
 		{
-			//Left
+			//Right
 			Flag_Angle = -TURN_ANGLE;
 			NearSorX1 = &(NearSorL1);
 			NearSorX2 = &(NearSorL2);
@@ -605,13 +621,20 @@ void Step_Obs(void)
 		}
 		else
 		{
-			//Right
+			//Left
 			Flag_Angle = TURN_ANGLE;
 			NearSorX1 = &(NearSorR1);
 			NearSorX2 = &(NearSorR2);
 			Log_TurnAngle_value = 1; //Log
 		}
 		Log_Save(Log_TurnAngle); //Log
+		//Reset angle
+		data_q.x = 0;
+		data_q.y = 0;
+		data_q.z = 0;
+		data_q.w = 1;
+		Log_TurnMax_value = 0;
+		//next
 		Flag_Step++;
 	}
 	if (Flag_Step == 1)
@@ -623,9 +646,27 @@ void Step_Obs(void)
 			Log_Save(Log_TurnBack);
 			Flag_Angle = Flag_Dir ? TURN_BACK : -TURN_BACK;
 		}
+		if (!Log_TurnMax_value)
+		{
+			if (data_angle.z * 57.2957795f > Para_TURN_MAX && Flag_Dir)
+			{
+				Log_TurnBack_value = 0;
+				Log_TurnMax_value = 1;
+				Log_Save(Log_TurnBack);
+				Flag_Angle = TURN_BACK;
+			}
+			if (data_angle.z * 57.2957795f < -(int16_t)Para_TURN_MAX && !Flag_Dir)
+			{
+				Log_TurnBack_value = 0;
+				Log_TurnMax_value = 1;
+				Log_Save(Log_TurnBack);
+				Flag_Angle = -TURN_BACK;
+			}
+		}
 		if ((NS_IS_UP(*NearSorX1)))
 		{
 			Log_TurnBack_value = 0;
+			Log_TurnMax_value = 0;
 			Log_Save(Log_TurnBack);
 			Flag_Angle = Flag_Dir ? TURN_BACK : -TURN_BACK;
 		}

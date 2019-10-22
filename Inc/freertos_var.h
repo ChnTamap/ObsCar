@@ -85,10 +85,11 @@ uint8_t *NearSorX2;
 uint8_t GUI_Mode = 0;
 uint8_t GUI_Sele = 0;
 //#Para
-#define Para_Len 5
-uint16_t Para_List[Para_Len] = {8, 95, 18, 17, 100};
-#define Para_ANGLE_READY Para_List[0] //15
-#define Para_OBS_DIS Para_List[1]	 //80
-#define Para_TURN_ANGLE Para_List[2]  //25
-#define Para_TURN_BACK Para_List[3]   //5
-#define Para_DIS_DIFF Para_List[4]	//20
+#define Para_Len 6
+uint16_t Para_List[Para_Len] = {8, 95, 18, 17, 10, 100};
+#define Para_ANGLE_READY Para_List[0]
+#define Para_OBS_DIS Para_List[1]
+#define Para_TURN_ANGLE Para_List[2]
+#define Para_TURN_BACK Para_List[3]
+#define Para_TURN_MAX Para_List[4]
+#define Para_DIS_DIFF Para_List[5]
