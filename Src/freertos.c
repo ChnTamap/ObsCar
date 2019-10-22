@@ -575,10 +575,12 @@ uint8_t Log_TurnBack_value = 0;
 void Log_TurnBack(void)
 {
 	if (Log_TurnBack_value)
-		printf("\tTurn back:DisDiff,FlagAngle");
+	{
+		printf("\tTurn back:DisDiff ");
+		printf(":%d\r\n", Log_TurnBack_value);
+	}
 	else
-		printf("\tTurn back:NearSor,FlagAngle");
-	printf(":%d\r\n", Flag_Angle * 90 / 1000);
+		printf("\tTurn back:NearSor\r\n");
 }
 uint8_t Log_TurnAngle_value = 0;
 void Log_TurnAngle(void)
@@ -617,7 +619,7 @@ void Step_Obs(void)
 		//判断突变
 		if ((HR04_GetFloatCm(0) - value_pDis > DIS_DIFF))
 		{
-			Log_TurnBack_value = 1;
+			Log_TurnBack_value = HR04_GetFloatCm(0) - value_pDis;
 			Log_Save(Log_TurnBack);
 			Flag_Angle = Flag_Dir ? TURN_BACK : -TURN_BACK;
 		}
