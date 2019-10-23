@@ -473,6 +473,15 @@ void GUI_Edit(uint16_t upd_items)
 		printf("\x1b[6B*F:DisDiff:%d  *  \r\x1b[6A",
 			   Para_DIS_DIFF);
 	}
+	if (upd_items & (0x0001 << 6))
+	{
+		if (GUI_Sele == 6)
+			BG_SELECT;
+		else
+			BG_NORMAL;
+		printf("\x1b[7B*E:RunLen:%d  *  \r\x1b[7A",
+			   Para_RUN_LEN);
+	}
 	BG_NORMAL;
 }
 void Key_Loop(void)
@@ -599,12 +608,14 @@ void Log_TurnBack(void)
 		printf("\tTurn back:NearSor\r\n");
 }
 uint8_t Log_TurnAngle_value = 0;
+int8_t Log_TurnAngle_angle = 0;
 void Log_TurnAngle(void)
 {
 	if (Log_TurnAngle_value)
-		printf("\tTurn Left\r\n");
+		printf("\tTurn Left:");
 	else
-		printf("\tTurn Right\r\n");
+		printf("\tTurn Right:");
+	printf("%d\r\n",Log_TurnAngle_angle);
 }
 //Obs
 void Step_Obs(void)
@@ -627,6 +638,7 @@ void Step_Obs(void)
 			NearSorX2 = &(NearSorR2);
 			Log_TurnAngle_value = 1; //Log
 		}
+		Log_TurnAngle_angle = data_angle.z * 57.2957795f;
 		Log_Save(Log_TurnAngle); //Log
 		//Reset angle
 		data_q.x = 0;
@@ -674,6 +686,8 @@ void Step_Obs(void)
 		if (NS_IS_PRESS(*NearSorX2))
 		{
 			Flag_Step++;
+			//转正
+			Flag_Angle = Flag_Dir ? TURN_ANGLE : -TURN_ANGLE;
 		}
 		value_pDis = HR04_GetFloatCm(0);
 		//避障
@@ -698,7 +712,16 @@ void Step_Obs(void)
 	else if (NS_IS_PRESS(NearSorR1))
 		value_servo = TURN_ANGLE;
 	else if (Flag_Step == 2)
-		value_servo = 0;
+	{
+		if (data_angle.z < 0 && Flag_Dir)
+		{
+			value_servo = 0;
+		}
+		else if (data_angle.z > 0 && !Flag_Dir)
+		{
+			value_servo = 0;
+		}
+	}
 }
 /* USER CODE END Application */
 
