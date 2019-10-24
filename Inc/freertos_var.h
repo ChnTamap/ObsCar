@@ -9,7 +9,7 @@
 #define M_PI 3.14159265358f
 //#Para
 #define Para_Len 7
-uint16_t Para_List[Para_Len] = {8, 95, 18, 17, 10, 100, 70};
+uint16_t Para_List[Para_Len] = {8, 95, 18, 17, 45, 100, 70};
 #define Para_ANGLE_READY Para_List[0]
 #define Para_OBS_DIS Para_List[1]
 #define Para_TURN_ANGLE Para_List[2]

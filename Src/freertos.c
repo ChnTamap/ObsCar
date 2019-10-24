@@ -665,14 +665,14 @@ void Step_Obs(void)
 				Log_TurnBack_value = 0;
 				Log_TurnMax_value = 1;
 				Log_Save(Log_TurnBack);
-				Flag_Angle = TURN_BACK;
+				Flag_Angle = 0;//TURN_BACK;
 			}
 			if (data_angle.z * 57.2957795f < -(int16_t)Para_TURN_MAX && !Flag_Dir)
 			{
 				Log_TurnBack_value = 0;
 				Log_TurnMax_value = 1;
 				Log_Save(Log_TurnBack);
-				Flag_Angle = -TURN_BACK;
+				Flag_Angle = 0;//-TURN_BACK;
 			}
 		}
 		if ((NS_IS_UP(*NearSorX1)))
