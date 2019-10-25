@@ -342,6 +342,17 @@ void GUI_Key(void)
 			Flag_Mode = FLAG_MODE_READY;
 			Flag_Step = 0;
 		}
+		else if(Flag_Mode == 0)
+		{
+			if(USART_IS_KEY(buf, 'W'))
+				value_servo = 0;
+			else if(USART_IS_KEY(buf, 'S'))
+				value_servo = 900;
+			else if(USART_IS_KEY(buf, 'A'))
+				value_servo = TURN_ANGLE;
+			else if(USART_IS_KEY(buf, 'D'))
+				value_servo = -TURN_ANGLE;
+		}
 	}
 	else
 	{
