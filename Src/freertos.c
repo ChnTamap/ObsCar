@@ -289,7 +289,11 @@ uint8_t USART1_Get(void)
 	return 0;
 }
 #define USART_IS_KEY(buf, key) ((buf == key) || (buf == (key - 'A' + 'a')))
-#define USART_CLEAR printf("\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\x1b[1B\x1b[K\x1b[5A");
+#define USART_CLEAR \
+	printf("\
+	\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\
+	\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\r\x1b[1B\x1b[K\
+	\r\x1b[1B\x1b[K\x1b[7A");
 void GUI_Key(void)
 {
 	uint8_t buf;
@@ -599,7 +603,7 @@ void Log_TurnBack(void)
 		printf("\tTurn back:DisDiff ");
 		printf(":%d\r\n", Log_TurnBack_value);
 	}
-	if (Log_TurnMax_value)
+	else if (Log_TurnMax_value)
 	{
 		printf("\tTurn back:Max ");
 		printf(":%d\r\n", Log_TurnMax_value);
@@ -641,10 +645,10 @@ void Step_Obs(void)
 		Log_TurnAngle_angle = data_angle.z * 57.2957795f;
 		Log_Save(Log_TurnAngle); //Log
 		//Reset angle
-		data_q.x = 0;
+		/* data_q.x = 0;
 		data_q.y = 0;
 		data_q.z = 0;
-		data_q.w = 1;
+		data_q.w = 1; */
 		Log_TurnMax_value = 0;
 		//next
 		Flag_Step++;
@@ -715,12 +719,13 @@ void Step_Obs(void)
 	{
 		if (data_angle.z < 0 && Flag_Dir)
 		{
-			value_servo = 0;
+			Flag_Angle = 0;
 		}
 		else if (data_angle.z > 0 && !Flag_Dir)
 		{
-			value_servo = 0;
+			Flag_Angle = 0;
 		}
+		value_servo = Flag_Angle;
 	}
 }
 /* USER CODE END Application */
